@@ -6,15 +6,7 @@ class QueryHandler:
         self.rag = RAG()
 
     def handle_query(self, question: str):
-        """
-        Handles a query by passing it to the RAG instance.
-        
-        Args:
-            question (str): The question to be queried.
-        
-        Returns:
-            dict: A dictionary containing the answer, sources, and titles.
-        """
+
         try:
             if not question:
                 return {"error": "Question cannot be empty"}
@@ -33,25 +25,16 @@ class QueryHandler:
         except Exception as e:
             return {"error": f"An error occurred while processing the query: {str(e)}"}
 
-    def add_lecture_to_db(self, title: str, content: str):
-        """
-        Adds a lecture to the vector database by chunking the content and generating embeddings.
-        
-        Args:
-            title (str): The title of the lecture.
-            content (str): The content of the lecture.
-        
-        Returns:
-            dict: A dictionary indicating success or failure and additional information.
-        """
-        try:
-            if not title or not content:
-                return {"error": "Both 'title' and 'content' fields are required"}
+    def add_lecture_to_db(self, course_title: str, lecture_title: str, content: str):
 
-            success = self.rag.add_lecture_to_vector_db(title, content)
+        try:
+            if not course_title or not lecture_title or not content:
+                return {"error": "All fields 'course_title', 'lecture_title', and 'content' are required"}
+
+            success = self.rag.add_lecture_to_vector_db(course_title, lecture_title, content)
 
             if success:
-                return {"message": f"Lecture '{title}' added successfully"}
+                return {"message": f"Lecture '{lecture_title}' from course '{course_title}' added successfully"}
             else:
                 return {"error": "Failed to add lecture to the database"}
         
