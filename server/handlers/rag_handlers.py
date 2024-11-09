@@ -1,6 +1,6 @@
 from rag.lecture_rag import RAG
 
-class QueryHandler():
+class QueryHandler:
     def __init__(self):
         self.rag = RAG()
         self.lecture_tracker = None
@@ -8,27 +8,46 @@ class QueryHandler():
     def set_lecture_tracker(self, tracker):
         self.lecture_tracker = tracker
 
-    def handle_query(self, course_title: str, lecture_title: str, question: str):
-        """Process and handle a user query."""
+    def handle_query(self, course_title: str, lecture_title: str, question: str, prefer_recent: bool = True):
+        """Process and handle a user query with preference for recent content."""
         try:
             if not question:
                 return {"error": "Question cannot be empty"}
 
-            # Combine in-memory and database query logic here if needed
+            # Get any in-memory content from current lecture
             in_memory_content = self.lecture_tracker.get_lecture_content(course_title, lecture_title) if self.lecture_tracker else ""
-            db_result = self.rag.query(question)
+            
+            # Query the RAG system with preference for recent content
+            db_result = self.rag.query(question, prefer_recent=prefer_recent)
 
-            if db_result:
-                combined_sources = [in_memory_content] + db_result["sources"] if in_memory_content else db_result["sources"]
-                
+            if "error" in db_result:
+                return db_result
+
+            if db_result.get("from_gpt", False):
+                # If it's a GPT response, return it directly
                 return {
                     "answer": db_result["answer"],
-                    "sources": combined_sources,
-                    "titles": db_result["titles"]
+                    "from_gpt": True,
+                    "message": "This topic wasn't covered in the lecture, but here's a general answer:"
                 }
-            else:
-                return {"error": "Failed to retrieve an answer"}
+
+            # Combine in-memory content with retrieved sources
+            combined_sources = [in_memory_content] + db_result["sources"] if in_memory_content else db_result["sources"]
             
+            response = {
+                "answer": db_result["answer"],
+                "sources": combined_sources,
+                "titles": db_result["titles"],
+                "from_recent": db_result.get("from_recent", False),
+                "from_gpt": False
+            }
+
+            # Add context about recency if available
+            if db_result.get("from_recent", False):
+                response["context"] = "This was just discussed in the lecture."
+            
+            return response
+
         except Exception as e:
             return {"error": f"An error occurred while processing the query: {str(e)}"}
 

@@ -56,15 +56,28 @@ def finalize_lecture():
 @Routes.route('/query', methods=['POST'])
 def query():
     """
-    Route to query the vector database.
+    Route to query the vector database with option to prioritize recent content.
     """
     data = request.get_json()
     question = data.get('question')
     course_title = data.get('course_title')
     lecture_title = data.get('lecture_title')
+    prefer_recent = data.get('prefer_recent', True)  # Default to True for prioritizing recent content
 
     if not question:
         return jsonify({"error": "The 'question' field is required"}), 400
 
-    response = query_handler.handle_query(course_title, lecture_title, question)
-    return jsonify(response), 200 if "answer" in response else 400
+    response = query_handler.handle_query(
+        course_title=course_title, 
+        lecture_title=lecture_title, 
+        question=question,
+        prefer_recent=prefer_recent
+    )
+    
+    # Return appropriate status code based on response type
+    if "answer" in response:
+        return jsonify(response), 200
+    elif "error" in response:
+        return jsonify(response), 400
+    else:
+        return jsonify({"error": "Unexpected response format"}), 500
