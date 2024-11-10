@@ -1,10 +1,10 @@
-import os
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 
 class Config:
-    PORT_NUMBER = int(os.getenv("PORT", "5000"))
+    PORT_NUMBER = int(os.getenv("PORT", "3005"))
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"
     OPENAI_API_KEY = os.getenv("OPEN_API_SECRET_KEY")
     QDRANT_HOST = os.getenv("QDRANT_HOST")
